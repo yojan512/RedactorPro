@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RedactorPro</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>✍️ RedactorPro</h1>
+    <button id="loginBtn">Iniciar Sesión</button>
+    <button id="logoutBtn" style="display:none;">Cerrar Sesión</button>
+  </header>
+
+  <main>
+    <section id="loginSection" style="display:none;">
+      <h3>Iniciar Sesión</h3>
+      <input type="text" id="nombreLogin" placeholder="Nombre completo" />
+      <input type="email" id="emailLogin" placeholder="Correo electrónico" />
+      <input type="password" id="passwordLogin" placeholder="Contraseña" />
+      <button onclick="iniciarSesion()">Ingresar</button>
+    </section>
+
+    <section class="form-section">
+      <h3>Redacción Inteligente (Simulada)</h3>
+      <label for="categoria">Categoría:</label>
+      <select id="categoria" onchange="actualizarOpciones()">
+        <option value="">Selecciona una categoría</option>
+        <option value="academico">🎓 Académico</option>
+        <option value="profesional">💼 Profesional</option>
+        <option value="juridico">⚖️ Jurídico</option>
+        <option value="marketing">🌐 Marketing</option>
+        <option value="otros">💬 Otros</option>
+      </select>
+
+      <label for="formato">Formato:</label>
+      <select id="formato"><option value="">Selecciona un formato</option></select>
+
+      <textarea id="inputText" placeholder="Escribe tu idea base..." rows="6"></textarea>
+      <button id="generarBtn" onclick="generarTexto()">Redactar con IA</button>
+
+      <div class="download-buttons">
+        <button onclick="descargarTexto('txt')">📄 TXT</button>
+        <button onclick="descargarTexto('pdf')">📄 PDF</button>
+        <button onclick="descargarTexto('docx')">📄 DOCX</button>
+      </div>
+
+      <div id="output" class="output-box"></div>
+    </section>
+
+    <section>
+      <h3>⚙️ Configuración</h3>
+      <div id="infoUsuario"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 RedactorPro. Desarrollado por John con ayuda de Alex.</p>
+  </footer>
+
+  <script>
+    const formatos = {
+      academico: ["Ensayo argumentativo", "Informe académico", "Reseña crítica", "Introducción de tesis", "Conclusión", "Justificación", "Marco teórico", "Artículo de investigación", "Artículo científico"],
+      profesional: ["Carta de presentación", "Hoja de vida", "Carta de renuncia", "Informe empresarial", "Propuesta de negocio", "Email profesional"],
+      juridico: ["PQRS", "Derecho de petición", "Modelo de tutela", "Demanda simple", "Carta a entidad de gobierno", "Acuerdo de compromiso"],
+      marketing: ["Publicación Instagram / Facebook", "Descripción de producto", "Anuncio publicitario", "Guion para video", "Contenido SEO", "Ideas para reels o TikTok"],
+      otros: ["Invitación", "Mensaje de felicitación", "Carta de recomendación", "Minuta de reunión", "Memoria descriptiva", "Guion para podcast", "Disculpa o retractación"]
+    };
+
+    function actualizarOpciones() {
+      const cat = document.getElementById("categoria").value;
+      const formato = document.getElementById("formato");
+      formato.innerHTML = "<option value=''>Selecciona un formato</option>";
+      (formatos[cat] || []).forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f;
+        opt.textContent = f;
+        formato.appendChild(opt);
+      });
+    }
+
+    function iniciarSesion() {
+      const nombre = document.getElementById("nombreLogin").value;
+      const email = document.getElementById("emailLogin").value;
+      const password = document.getElementById("passwordLogin").value;
+      if (!nombre || !email || !password) return alert("Completa todos los campos");
+
+      const rol = email === "admin@redactor.com" ? "admin" : "usuario";
+      const user = { nombre, email, rol };
+      localStorage.setItem("usuarioActivo", JSON.stringify(user));
+      location.reload();
+    }
+
+    function generarTexto() {
+      const user = JSON.parse(localStorage.getItem("usuarioActivo"));
+      if (!user) return alert("Inicia sesión primero.");
+
+      const cat = document.getElementById("categoria").value;
+      const formato = document.getElementById("formato").value;
+      const idea = document.getElementById("inputText").value;
+      if (!cat || !formato || !idea) return alert("Completa todo para redactar.");
+
+      const simulacion = `🧠 Redacción simulada:
+
+Formato: ${formato}
+Categoría: ${cat}
+
+Texto base: "${idea}"
+
+🔽 Resultado generado:
+Este es el contenido profesional simulado que se entregaría en base a tu entrada.`;
+      document.getElementById("output").innerText = simulacion;
+    }
+
+    function descargarTexto(tipo) {
+      const texto = document.getElementById("output").innerText;
+      let blob;
+      if (tipo === "txt") {
+        blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
+        guardarArchivo(blob, "redactorpro.txt");
+      } else if (tipo === "pdf") {
+        const doc = new window.jspdf.jsPDF();
+        doc.text(doc.splitTextToSize(texto, 180), 10, 10);
+        doc.save("redactorpro.pdf");
+      } else if (tipo === "docx") {
+        const html = `<html><body>${texto.replace(/\n/g, "<br>")}</body></html>`;
+        blob = new Blob(["\ufeff", html], { type: "application/msword" });
+        guardarArchivo(blob, "redactorpro.doc");
+      }
+    }
+
+    function guardarArchivo(blob, nombre) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = nombre;
+      link.click();
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem("usuarioActivo");
+      location.reload();
+    }
+
+    const user = JSON.parse(localStorage.getItem("usuarioActivo"));
+    if (user) {
+      document.getElementById("loginBtn").style.display = "none";
+      document.getElementById("logoutBtn").style.display = "inline-block";
+      document.getElementById("infoUsuario").innerHTML =
+        `<p><strong>Usuario:</strong> ${user.nombre}<br><strong>Rol:</strong> ${user.rol}</p>` +
+        (user.rol === "admin" ? "<a href='admin.html'>Ir al panel de administración</a>" : "");
+    } else {
+      document.getElementById("loginSection").style.display = "block";
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", cerrarSesion);
+  </script>
+</body>
+</html>
