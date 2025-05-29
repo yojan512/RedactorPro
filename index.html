@@ -103,7 +103,8 @@
       if (!cat || !formato || !idea) return alert("Completa todo para redactar.");
 
       try {
-        const response = await fetch("http://localhost:5000/api/redactar", {
+        const response = await fetch("https://redactorpro-backend.onrender.com/api/redactar", {
+
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ texto: idea, categoria: cat, formato })
