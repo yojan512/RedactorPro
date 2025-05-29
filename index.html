@@ -93,7 +93,7 @@
       location.reload();
     }
 
-    function generarTexto() {
+    async function generarTexto() {
       const user = JSON.parse(localStorage.getItem("usuarioActivo"));
       if (!user) return alert("Inicia sesión primero.");
 
@@ -102,16 +102,23 @@
       const idea = document.getElementById("inputText").value;
       if (!cat || !formato || !idea) return alert("Completa todo para redactar.");
 
-      const simulacion = `🧠 Redacción simulada:
+      try {
+        const response = await fetch("http://localhost:5000/api/redactar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto: idea, categoria: cat, formato })
+        });
 
-Formato: ${formato}
-Categoría: ${cat}
-
-Texto base: "${idea}"
-
-🔽 Resultado generado:
-Este es el contenido profesional simulado que se entregaría en base a tu entrada.`;
-      document.getElementById("output").innerText = simulacion;
+        const data = await response.json();
+        if (data.resultado) {
+          document.getElementById("output").innerText = data.resultado;
+        } else {
+          alert("Respuesta del servidor no válida.");
+        }
+      } catch (error) {
+        console.error("Error al conectar con el backend:", error);
+        alert("Error al conectar con el servidor. ¿Está encendido el backend?");
+      }
     }
 
     function descargarTexto(tipo) {
